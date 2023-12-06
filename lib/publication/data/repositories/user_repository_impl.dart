@@ -30,7 +30,7 @@ class UserRepositoryImpl implements UserRepository {
   }
 
   @override
-  Future<void> deleteUser(String id) async {
-    await userLocalDataSource.deleteUser(id);
+  Future<void> deleteUser(String id,bool connection) async {
+    await userLocalDataSource.deleteUser(id, connection);
   }
 }

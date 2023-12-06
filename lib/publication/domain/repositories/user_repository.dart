@@ -7,5 +7,5 @@ abstract class UserRepository {
   Future<PostModel> getUser(String id);
   Future<void> createUser(createModel user, bool connection);
   Future<void> updateUser(PostModel user,bool conection);
-  Future<void> deleteUser(String id);
+  Future<void> deleteUser(String id,bool connection);
 }

@@ -13,7 +13,7 @@ abstract class UserLocalDataSource {
   Future<PostModel> getUser(String id);
   Future<void> createUser(createModel user, bool connection);
   Future<void> updateUser(PostModel user,bool conection);
-  Future<void> deleteUser(String id);
+  Future<void> deleteUser(String id,bool connection);
 }
 
 class UserLocalDataSourceImp implements UserLocalDataSource {
@@ -216,14 +216,63 @@ Future<void> _sendPendingUpdates() async {
 }
 
 
-  @override
-  Future<void> deleteUser(String id) async {
-    final http.Response response = await http.delete(
-      Uri.parse('$_baseUrl/Student/$id'),
-    );
+ @override
+Future<void> deleteUser(String id, bool connection) async {
+  if (connection) {
+    try {
+      final http.Response response = await http.delete(
+        Uri.parse('$_baseUrl/Student/$id'),
+      );
 
-    if (response.statusCode != 200) {
-      throw Exception('Failed to delete user');
+      if (response.statusCode != 200) {
+        throw Exception('Failed to delete user');
+      }
+
+      // Ahora que el usuario se ha eliminado exitosamente, intenta enviar operaciones pendientes
+      await _sendPendingDeletions();
+    } catch (e) {
+      print('Error during network call: $e');
+      throw Exception('Network error');
+    }
+  } else {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      List<String>? storedData = prefs.getStringList('pendingDeletions');
+      if (storedData == null) {
+        storedData = [];
+      }
+
+      // Almacena la operación de eliminación pendiente
+      storedData.add(id);
+
+      await prefs.setStringList('pendingDeletions', storedData);
+      print('Delete operation saved to SharedPreferences');
+    } catch (error) {
+      print('Error saving delete operation to SharedPreferences: $error');
+      // Puedes manejar el error según tus necesidades
     }
   }
+}
+
+Future<void> _sendPendingDeletions() async {
+  try {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String>? storedData = prefs.getStringList('pendingDeletions');
+    if (storedData != null && storedData.isNotEmpty) {
+      for (String id in storedData) {
+        await http.delete(
+          Uri.parse('$_baseUrl/Student/$id'),
+        );
+      }
+
+      // Borra las operaciones pendientes después de enviarlas
+      await prefs.remove('pendingDeletions');
+      print('Pending deletions sent successfully');
+    }
+  } catch (error) {
+    print('Error sending pending deletions: $error');
+    // Puedes manejar el error según tus necesidades
+  }
+}
+
 }

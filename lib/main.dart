@@ -28,7 +28,9 @@ void main() {
         ),
         BlocProvider<DelitePostBloc>(
           create: (context) => DelitePostBloc(
-              deleteUserUseCase: usercaseConfig.deleteUserUseCase),
+            deleteUserUseCase: usercaseConfig.deleteUserUseCase,
+            connectivityService: connectivityService,
+          ),
         ),
         BlocProvider<getIdpostBloc>(
           create: (context) =>
